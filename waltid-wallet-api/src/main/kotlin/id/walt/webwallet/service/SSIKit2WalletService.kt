@@ -19,6 +19,7 @@ import id.walt.oid4vc.requests.CredentialOfferRequest
 import id.walt.oid4vc.responses.AuthorizationErrorCode
 import id.walt.webwallet.config.ConfigManager
 import id.walt.webwallet.config.ConfigManager.asJsonObject
+import id.walt.webwallet.config.RegistrationDefaultsConfig
 import id.walt.webwallet.config.OciKeyConfig
 import id.walt.webwallet.config.OciRestApiKeyConfig
 import id.walt.webwallet.db.models.WalletCategoryData
@@ -78,6 +79,7 @@ class SSIKit2WalletService(
     private val credentialService = CredentialsService()
     private val eventService = EventService()
     private val credentialReportsService = ReportService.Credentials(credentialService, eventService)
+    private val defaultGenerationConfig by lazy { ConfigManager.getConfig<RegistrationDefaultsConfig>() }
 
     companion object {
         init {
@@ -342,7 +344,7 @@ class SSIKit2WalletService(
     /* DIDs */
 
     override suspend fun createDid(method: String, args: Map<String, JsonPrimitive>): String {
-        val keyId = args["keyId"]?.content?.takeIf { it.isNotEmpty() } ?: generateKey()
+        val keyId = args["keyId"]?.content?.takeIf { it.isNotEmpty() } ?: generateKey(defaultGenerationConfig.keyGenerationRequest)
         val key = getKey(keyId)
         val result = DidService.registerDefaultDidMethodByKey(method, key, args)
 
