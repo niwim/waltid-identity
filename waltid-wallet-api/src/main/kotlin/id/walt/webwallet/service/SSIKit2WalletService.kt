@@ -344,7 +344,16 @@ class SSIKit2WalletService(
     /* DIDs */
 
     override suspend fun createDid(method: String, args: Map<String, JsonPrimitive>): String {
-        val keyId = args["keyId"]?.content?.takeIf { it.isNotEmpty() } ?: generateKey(defaultGenerationConfig.keyGenerationRequest)
+        var defaultKeyGenerationRequest: KeyGenerationRequest? = null
+        try{
+            defaultKeyGenerationRequest = defaultGenerationConfig?.keyGenerationRequest
+        }catch (e: Exception){
+            //TODO: implement propper logging
+            println("$e")
+        }
+        val keyId = args["keyId"]?.content?.takeIf { it.isNotEmpty() } 
+             ?: defaultKeyGenerationRequest?.let { generateKey(it) } 
+             ?: generateKey()
         val key = getKey(keyId)
         val result = DidService.registerDefaultDidMethodByKey(method, key, args)
 
